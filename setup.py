@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'ti_es_gps_node = ti_es_gps_package.ti_es_gps_node:main'
         ],
     },
 )
