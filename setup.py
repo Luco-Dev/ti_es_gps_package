@@ -1,3 +1,4 @@
+import os
 from setuptools import find_packages, setup
 
 package_name = 'ti_es_gps_package'
@@ -11,7 +12,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools', 'adafruit-circuitpython-gps'],
+    install_requires=['setuptools'],
     zip_safe=True,
     maintainer='luxo',
     maintainer_email='luxo@todo.todo',
@@ -24,3 +25,6 @@ setup(
         ],
     },
 )
+
+# Manually install missing dependencies
+os.system("pip3 install adafruit-circuitpython-gps")
