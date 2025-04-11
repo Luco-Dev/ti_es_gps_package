@@ -7,11 +7,13 @@ import time
 import serial
 import adafruit_gps
 import numpy as np
+from datetime import datetime
+
+# Constants for WGS-84
+a = 6378137.0            # semi-major axis
+e2 = 6.69437999014e-3    # eccentricity squared
 
 def geodetic_to_ecef(lat, lon, alt):
-    a = 6378137.0  # semi-major axis
-    e2 = 6.69437999014e-3  # eccentricity squared
-
     lat_rad = math.radians(lat)
     lon_rad = math.radians(lon)
 
@@ -23,20 +25,43 @@ def geodetic_to_ecef(lat, lon, alt):
 
     return np.array([x, y, z])
 
-def ecef_to_ra_dec(pos_eq):
-    x, y, z = pos_eq
-    r = np.linalg.norm(pos_eq)
+def greenwich_sidereal_time():
+    now = datetime.utcnow()
+    year = now.year
+    month = now.month
+    day = now.day + (now.hour + now.minute / 60 + now.second / 3600) / 24
+
+    if month <= 2:
+        year -= 1
+        month += 12
+
+    A = int(year / 100)
+    B = 2 - A + int(A / 4)
+
+    JD = int(365.25 * (year + 4716)) + int(30.6001 * (month + 1)) + day + B - 1524.5
+    T = (JD - 2451545.0) / 36525.0
+    GST = 280.46061837 + 360.98564736629 * (JD - 2451545.0) + T*T*(0.000387933 - T / 38710000.0)
+    GST = GST % 360.0
+
+    return math.radians(GST)  # in radians
+
+def ecef_to_eci(pos_ecef):
+    gst = greenwich_sidereal_time()
+    x, y, z = pos_ecef
+    x_eci = math.cos(gst) * x + math.sin(gst) * y
+    y_eci = -math.sin(gst) * x + math.cos(gst) * y
+    z_eci = z
+    return np.array([x_eci, y_eci, z_eci])
+
+def eci_to_ra_dec(pos_eci):
+    x, y, z = pos_eci
+    r = np.linalg.norm(pos_eci)
     ra = math.atan2(y, x)
     dec = math.asin(z / r)
 
     ra_deg = math.degrees(ra) % 360
     dec_deg = math.degrees(dec)
     return ra_deg, dec_deg, r
-
-def apply_transformation_matrix(pos_ecef, vel_ecef, transformation_matrix):
-    state_vector = np.concatenate((pos_ecef, vel_ecef))
-    transformed = transformation_matrix @ state_vector
-    return transformed[:3], transformed[3:]
 
 class GPSEquatorialPublisher(Node):
     def __init__(self):
@@ -53,8 +78,6 @@ class GPSEquatorialPublisher(Node):
         self.get_logger().info("GPS to Equatorial Coordinate Publisher Started")
         self.timer = self.create_timer(1.0, self.timer_callback)
 
-        self.transformation_matrix = np.identity(6)
-
     def timer_callback(self):
         self.gps.update()
         if not self.gps.has_fix:
@@ -66,10 +89,8 @@ class GPSEquatorialPublisher(Node):
         alt = self.gps.altitude_m or 0.0
 
         pos_ecef = geodetic_to_ecef(lat, lon, alt)
-        vel_ecef = np.zeros(3)  # Assuming velocity is negligible
-
-        pos_eq, _ = apply_transformation_matrix(pos_ecef, vel_ecef, self.transformation_matrix)
-        ra, dec, _ = ecef_to_ra_dec(pos_eq)
+        pos_eci = ecef_to_eci(pos_ecef)
+        ra, dec, _ = eci_to_ra_dec(pos_eci)
 
         equatorial_msg = Float64MultiArray()
         equatorial_msg.data = [ra, dec]
