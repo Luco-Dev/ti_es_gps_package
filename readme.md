@@ -56,4 +56,4 @@ colcon build
 
 ## Author
 
-Developed by [Your Name]. Feel free to fork this repository for your own use or to contribute improvements. If you make enhancements or fixes, consider submitting a pull request so the community can benefit too.
+Developed by Luco Berkouwer. Feel free to fork this repository for your own use or to contribute improvements. If you make enhancements or fixes, consider submitting a pull request so the community can benefit too.
