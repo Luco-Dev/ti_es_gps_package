@@ -1,74 +1,59 @@
 # GPS ROS Node for Serial GPS Module
 
-## Overview
+## Introduction
 
-This ROS 2 node provides live geolocation (latitude and longitude) from a serial GPS device (such as a USB GPS dongle) to a ROS-based system. It publishes current GPS coordinates received from the GPS module for use by other nodes (e.g., robotic navigation, start position selection, etc).
+This ROS 2 node provides live geolocation (latitude and longitude) data from a serial GPS module (e.g., a USB GPS dongle). It publishes this data to a ROS topic, enabling integration with robotic systems for tasks such as navigation, localization, or start-point selection.
 
-## Setup
+## Packages
 
-### Dependencies
+The node relies on the following packages:
 
-- **ROS 2** (e.g., Foxy, Humble, etc.)
+- **ROS 2**: Any distribution such as Foxy, Humble, etc. (Jazzy used)
 - **Python Libraries**:
-  - `rclpy`
-  - `pyserial`
-  - `adafruit-circuitpython-gps`  
-    > On Ubuntu, install via:  
-    ```
-    pip install pyserial adafruit-circuitpython-gps
-    ```
+  - ```rclpy```
+  - ```pyserial```
+  - ```adafruit-circuitpython-gps```
 
-### Installation
+Install the Python libraries using:
 
-1. Clone the package into your ROS workspace:
-   ```
-   cd ~/your_ros_workspace/src
-   git clone <repository-url>
-   ```
-2. Install required Python libraries (if needed):
-   ```
-   pip install pyserial adafruit-circuitpython-gps
-   ```
-3. Build the workspace:
-   ```
-   cd ~/your_ros_workspace
-   colcon build
-   ```
+```
+pip install pyserial adafruit-circuitpython-gps
+```
 
-## Node Details
 
-- **Node Name**: `gps_publisher`
-- **Publisher**: `/ti/es/gps_data` (`std_msgs/String`)  
-  Publishes a JSON string containing live GPS coordinates of the device.
+## Hardware that interacts with it
 
-## Communication
+- USB GPS modules (NMEA compatible)
+- Serial GPS receivers (connected via ```/dev/ttyUSB0```, ```/dev/ttyAMA0```, etc.)
 
-- **GPS Device**: Connects to an NMEA GPS receiver (typ. `/dev/ttyUSB0`).
-- **Message format**: Publishes a string in the following form:
-  ```
-  {"type": "gps", "lat": 51.87654, "lon": 4.62345}
-  ```
+## Installation guide
 
-## Functions
+1. Clone the package into your ROS 2 workspace:
 
-- Reads NMEA sentences from the serial GPS.
-- Parses latitude and longitude from GPS fix (uses Adafruit_CircuitPython_GPS).
-- Publishes the most recent GPS position as a ROS message.
+```
+cd ~/your_ros_workspace/src
+git clone <repository-url>
+```
 
-## Usage
+2. Install required Python libraries:
 
-1. Connect your GPS receiver (e.g., USB GPS dongle) and ensure it appears as `/dev/ttyUSB0` or similar.
-2. Run the ROS node:
-   ```
-   ros2 run <package_name> gps_publisher
-   ```
-3. Subscribe to `/ti/es/gps_data` to receive live location updates:
-   ```
-   ros2 topic echo /ti/es/gps_data
-   ```
-4. Integrate into your robotic application as required.
+```
+pip install pyserial adafruit-circuitpython-gps
+```
 
-## Notes
+3. Build your workspace:
 
-- The node will only publish data after a valid GPS fix is acquired.
-- Edit the serial port name in the code if your device appears elsewhere (e.g., `/dev/ttyAMA0`).
+```
+cd ~/your_ros_workspace
+colcon build
+```
+
+## Configuration options
+
+- **Serial Port**: Default is ```/dev/ttyUSB0```. Change this in the code if your GPS device appears on a different port.
+- **Baud Rate**: Ensure the baud rate matches your GPS device settings (commonly 9600 or 115200).
+- **Topic Name**: Default is ```/ti/es/gps_data```. You can remap this in launch files or at runtime.
+
+## Author
+
+Developed by Luco Berkouwer. For contributions, suggestions, or issues, please open an issue or contact via the repository.
